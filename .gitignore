@@ -13,3 +13,6 @@ model/artifacts/
 
 # streamlit
 .streamlit/secrets.toml
+
+# logs
+logs/

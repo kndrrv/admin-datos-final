@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score, classification_report, precision_score, recall_score, roc_auc_score
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -20,8 +20,6 @@ load_dotenv()
 ARTIFACTS_DIR = Path(__file__).resolve().parent / "artifacts"
 MODEL_PATH = ARTIFACTS_DIR / "mlp_classifier.joblib"
 METRICS_PATH = ARTIFACTS_DIR / "metrics.json"
-TUNED_MODEL_PATH = ARTIFACTS_DIR / "mlp_classifier_gridcv.joblib"
-TUNED_METRICS_PATH = ARTIFACTS_DIR / "metrics_gridcv.json"
 
 
 def get_engine():
@@ -218,123 +216,12 @@ def train_and_evaluate_thresholds(table_name: str = "curated_data") -> dict:
     return metrics
 
 
-def tune_model_gridcv(table_name: str = "curated_data", cv: int = 5) -> dict:
-    print("[gridcv] iniciando busqueda de hiperparametros con GridSearchCV...")
-    df = load_curated_data(table_name)
-    X, y, feature_columns = prepare_features(df)
-
-    print(f"[gridcv] columnas usadas: {feature_columns}")
-    X_train, X_test, y_train, y_test = get_train_test_split(X, y)
-
-    pipeline = build_pipeline()
-    param_grid = {
-        "model__hidden_layer_sizes": [
-            (8,),
-            (16,),
-            (32,),
-            (16, 8),
-            (24, 12),
-            (32, 16),
-            (48, 24),
-            (64, 32),
-        ],
-        "model__alpha": [0.0001, 0.0005, 0.001, 0.005, 0.01],
-        "model__learning_rate_init": [0.0005, 0.001, 0.002, 0.005],
-        "model__activation": ["relu", "tanh"],
-        "model__batch_size": [16, 32],
-        "model__max_iter": [500, 800],
-        "model__early_stopping": [True],
-    }
-
-    total_combinations = (
-        len(param_grid["model__hidden_layer_sizes"])
-        * len(param_grid["model__alpha"])
-        * len(param_grid["model__learning_rate_init"])
-        * len(param_grid["model__activation"])
-        * len(param_grid["model__batch_size"])
-        * len(param_grid["model__max_iter"])
-        * len(param_grid["model__early_stopping"])
-    )
-
-    print(f"[gridcv] combinaciones a evaluar: {total_combinations}")
-    print(f"[gridcv] folds de validacion cruzada: {cv}")
-    print("[gridcv] busqueda refinada para datos tabulares pequenos.")
-    print("[gridcv] metrica de seleccion: roc_auc.")
-    print("[gridcv] metrica secundaria de monitoreo: recall.")
-
-    grid_search = GridSearchCV(
-        estimator=pipeline,
-        param_grid=param_grid,
-        scoring={"roc_auc": "roc_auc", "recall": "recall"},
-        cv=cv,
-        n_jobs=-1,
-        verbose=3,
-        refit="roc_auc",
-        return_train_score=False,
-    )
-
-    print("[gridcv] entrenando y evaluando combinaciones...")
-    grid_search.fit(X_train, y_train)
-
-    print(f"[gridcv] mejor score CV (roc_auc): {round(grid_search.best_score_, 4)}")
-    print(f"[gridcv] mejores hiperparametros: {grid_search.best_params_}")
-    print("[gridcv] top 5 configuraciones por roc_auc:")
-
-    cv_results = pd.DataFrame(grid_search.cv_results_)
-    top_results = cv_results.sort_values(by="mean_test_roc_auc", ascending=False).head(5)
-    top_recall_results = cv_results.sort_values(by="mean_test_recall", ascending=False).head(5)
-
-    for rank, (_, row) in enumerate(top_results.iterrows(), start=1):
-        print(
-            f"[gridcv] top {rank} | roc_auc={row['mean_test_roc_auc']:.4f} | "
-            f"recall={row['mean_test_recall']:.4f} | params={row['params']}"
-        )
-
-    print("[gridcv] top 5 configuraciones por recall:")
-
-    for rank, (_, row) in enumerate(top_recall_results.iterrows(), start=1):
-        print(
-            f"[gridcv] top recall {rank} | recall={row['mean_test_recall']:.4f} | "
-            f"roc_auc={row['mean_test_roc_auc']:.4f} | params={row['params']}"
-        )
-
-    metrics = evaluate_model(grid_search.best_estimator_, X_test, y_test)
-    metrics["best_cv_score"] = round(grid_search.best_score_, 4)
-    metrics["best_cv_recall"] = round(
-        float(top_results.iloc[0]["mean_test_recall"]),
-        4,
-    )
-    metrics["best_params"] = grid_search.best_params_
-
-    save_artifacts(
-        grid_search.best_estimator_,
-        feature_columns,
-        metrics,
-        model_path=TUNED_MODEL_PATH,
-        metrics_path=TUNED_METRICS_PATH,
-    )
-    return metrics
-
-
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Entrena un MLPClassifier base o ajustado con GridSearchCV."
-    )
-    parser.add_argument(
-        "--gridcv",
-        action="store_true",
-        help="Ejecuta busqueda de hiperparametros con GridSearchCV.",
-    )
+    parser = argparse.ArgumentParser(description="Entrena el MLPClassifier final del proyecto.")
     parser.add_argument(
         "--table",
         default="curated_data",
         help="Nombre de la tabla desde la que se leeran los datos.",
-    )
-    parser.add_argument(
-        "--cv",
-        type=int,
-        default=5,
-        help="Cantidad de folds para GridSearchCV.",
     )
     parser.add_argument(
         "--thresholds",
@@ -347,9 +234,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
 
-    if args.gridcv:
-        tune_model_gridcv(table_name=args.table, cv=args.cv)
-    elif args.thresholds:
+    if args.thresholds:
         train_and_evaluate_thresholds(table_name=args.table)
     else:
         train_model(table_name=args.table)

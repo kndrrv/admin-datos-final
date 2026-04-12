@@ -4,7 +4,7 @@ Proyecto de ETL, entrenamiento y prediccion para un problema de clasificacion bi
 
 ## Modelo
 
-Se entreno un `MLPClassifier` como modelo principal. Aunque se probaron busquedas con `GridSearchCV`, el mejor comportamiento practico se obtuvo con el modelo base y un ajuste del threshold de decision.
+Se entreno un `MLPClassifier` como modelo principal. El modelo final del proyecto se basa en el entrenamiento estandar y un ajuste del threshold de decision.
 
 ## Criterio final
 
@@ -31,3 +31,12 @@ Prediccion:
 ```powershell
 .\venv\Scripts\python.exe model\predict.py
 ```
+
+## Integracion de frontend
+
+Funciones para la integracion:
+
+- `model.predict.load_model()`: carga el modelo serializado y las columnas esperadas.
+- `model.predict.build_model_input(input_data)`: recibe los datos crudos y agrega las features derivadas.
+- `model.predict.predict(input_data)`: recibe un `dict` y devuelve `prediction`, `probability` y `threshold`.
+- `model.predict.predict_patient(...)`: recibe los campos del paciente como argumentos y devuelve el resultado final listo para mostrar.
