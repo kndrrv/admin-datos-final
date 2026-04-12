@@ -19,24 +19,6 @@ st.set_page_config(
 st.title("Predicción de Enfermedad Cardíaca")
 st.markdown("Ingrese los datos del paciente para obtener una predicción del modelo.")
 
-# ── sidebar: estado del sistema ──────────────────────────────────────────────
-with st.sidebar:
-    st.header("Estado del sistema")
-
-    db_url = os.getenv("DATABASE_URL")
-    if db_url and "usuario" not in db_url:
-        st.success("Base de datos conectada")
-    else:
-        st.warning("Sin conexión a base de datos")
-
-    if MODEL_PATH.exists():
-        st.success("Modelo cargado")
-    else:
-        st.warning("Modelo no disponible aún")
-
-    st.divider()
-    st.caption("Administración de datos · LEAD University")
-
 # ── formulario de entrada ────────────────────────────────────────────────────
 st.subheader("Datos del paciente")
 
