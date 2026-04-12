@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+from typing import Optional, List
 
 import joblib
 import pandas as pd
@@ -115,7 +116,7 @@ def evaluate_thresholds(
     model: Pipeline,
     X_test: pd.DataFrame,
     y_test: pd.Series,
-    thresholds: list[float] | None = None,
+    thresholds: Optional[List[float]] = None,
 ) -> dict:
     if thresholds is None:
         thresholds = [0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6]
