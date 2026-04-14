@@ -1,42 +1,62 @@
-# admin-datos-final
+# Pipeline de Predicción de Enfermedad Cardíaca
 
-Proyecto de ETL, entrenamiento y prediccion para un problema de clasificacion binaria con datos tabulares.
+Proyecto final de Administración de Datos — LEAD University.  
+Esteban Ramírez · Kendra Vega · Ignacio Castillo.
+
+---
+
+## Requisitos previos
+
+- Python 3.9 o superior
+- Archivo `.env` en la raíz del proyecto con el connection string de la base de datos:
+
+```
+DATABASE_URL=postgresql://usuario:password@host/dbname?sslmode=require
+```
+
+---
+
+## Instalación
+
+```bash
+git clone https://github.com/kndrrv/admin-datos-final.git
+cd admin-datos-final
+pip install -r requirements.txt
+```
+
+---
+
+## Ejecución
+
+**1. Correr el pipeline** — extrae, transforma, carga y entrena el modelo:
+
+```bash
+python orchestration/pipeline.py data/heart.csv
+```
+
+**2. Levantar la aplicación** — se recomienda Streamlit por su facilidad de uso:
+
+```bash
+streamlit run app/main.py
+```
+
+Abre en `http://localhost:8501`. Ingrese los datos clínicos del paciente y presione **Predecir**.
+
+---
+
+## Estructura
+
+```
+├── etl/            # Extracción, transformación y carga
+├── model/          # Entrenamiento e inferencia
+├── orchestration/  # Pipeline maestro
+├── app/            # Aplicación Streamlit
+└── db/             # Esquema de la base de datos
+```
+
+---
 
 ## Modelo
 
-Se entreno un `MLPClassifier` como modelo principal. El modelo final del proyecto se basa en el entrenamiento estandar y un ajuste del threshold de decision.
-
-## Criterio final
-
-- Modelo final: `MLPClassifier` con hiperparametros base.
-- Umbral de decision usado en prediccion: `0.35`.
-- Motivo: mantiene `roc_auc = 0.8506` y mejora `recall` de `0.7879` a `0.9091` sin empeorar la `accuracy` observada (`0.7705`).
-
-## Ejecucion
-
-Entrenamiento base:
-
-```powershell
-.\venv\Scripts\python.exe model\train.py
-```
-
-Analisis de thresholds:
-
-```powershell
-.\venv\Scripts\python.exe model\train.py --thresholds
-```
-
-Prediccion:
-
-```powershell
-.\venv\Scripts\python.exe model\predict.py
-```
-
-## Integracion de frontend
-
-Funciones para la integracion:
-
-- `model.predict.load_model()`: carga el modelo serializado y las columnas esperadas.
-- `model.predict.build_model_input(input_data)`: recibe los datos crudos y agrega las features derivadas.
-- `model.predict.predict(input_data)`: recibe un `dict` y devuelve `prediction`, `probability` y `threshold`.
-- `model.predict.predict_patient(...)`: recibe los campos del paciente como argumentos y devuelve el resultado final listo para mostrar.
+Red neuronal MLPClassifier entrenada sobre el UCI Heart Disease Dataset.  
+Umbral de decisión: `0.35` — Accuracy: `0.7705` — Recall: `0.9091` — ROC-AUC: `0.8506`.
