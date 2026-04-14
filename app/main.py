@@ -30,32 +30,6 @@ st.info(
     "para ver una explicación."
 )
 
-# ── sidebar: estado del sistema ──────────────────────────────────────────────
-with st.sidebar:
-    st.header("Estado del sistema")
-
-    db_url = os.getenv("DATABASE_URL")
-    if db_url and "usuario" not in db_url:
-        st.success("Base de datos conectada")
-    else:
-        st.warning("Sin conexión a base de datos")
-
-    if MODEL_PATH.exists():
-        st.success("Modelo cargado")
-    else:
-        st.warning("Modelo no disponible aún")
-
-    st.divider()
-
-    st.markdown("**Sobre el modelo**")
-    st.caption(
-        "Red neuronal (MLPClassifier) entrenada sobre el UCI Heart Disease Dataset. "
-        "Umbral de decisión ajustado a 0.35 para maximizar la detección de casos positivos."
-    )
-
-    st.divider()
-    st.caption("Administración de datos · LEAD University")
-
 # ── sección 1: datos demográficos ────────────────────────────────────────────
 st.subheader("Datos demográficos")
 st.caption("Información general del paciente.")
